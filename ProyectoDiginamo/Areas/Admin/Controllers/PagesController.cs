@@ -8,63 +8,54 @@ using System.Web.Mvc;
 
 namespace ProyectoDiginamo.Areas.Admin.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class PagesController : Controller
     {
         // GET: Admin/Pages
         public ActionResult Index()
         {
-            //Declare list of PageN
-            List<PageVM> pageList;
+            // Declare list of PageVM
+            List<PageVM> pagesList;
 
-            
-            using (Db db= new Db())
+            using (Db db = new Db())
             {
-                //Init the list
-                pageList = db.Pages.ToList().OrderBy(x => x.Sorting).Select(x => new PageVM(x)).ToList();
-
+                // Init the list
+                pagesList = db.Pages.ToArray().OrderBy(x => x.Sorting).Select(x => new PageVM(x)).ToList();
             }
 
-            //Return the view with list
-
-
-            return View(pageList);
+            // Return view with list
+            return View(pagesList);
         }
-        
 
-        
-        // Get: Admin/Pages/addPage
+        // GET: Admin/Pages/AddPage
         [HttpGet]
         public ActionResult AddPage()
         {
             return View();
         }
 
-        // POST: Admin/Pages/addPage
+        // POST: Admin/Pages/AddPage
         [HttpPost]
         public ActionResult AddPage(PageVM model)
         {
-
-            //Chesck the state
-            if (! ModelState.IsValid)
+            // Check model state
+            if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
             using (Db db = new Db())
             {
-
-
-
-                //Declare Slug
+                // Declare slug
                 string slug;
 
-                //Initialaze pageDTO
+                // Init pageDTO
                 PageDTO dto = new PageDTO();
 
-                //DTO title
+                // DTO title
                 dto.Title = model.Title;
 
-                //Check for and set slug if need be
+                // Check for and set slug if need be
                 if (string.IsNullOrWhiteSpace(model.Slug))
                 {
                     slug = model.Title.Replace(" ", "-").ToLower();
@@ -74,61 +65,54 @@ namespace ProyectoDiginamo.Areas.Admin.Controllers
                     slug = model.Slug.Replace(" ", "-").ToLower();
                 }
 
-                //Make sure title and slug are unique
-                if (db.Pages.Any( x => x.Title == model.Title ) || db.Pages.Any(x => x.Slug == slug) )
+                // Make sure title and slug are unique
+                if (db.Pages.Any(x => x.Title == model.Title) || db.Pages.Any(x => x.Slug == slug))
                 {
-
-                    ModelState.AddModelError("", " That tilte or slug already exists");
+                    ModelState.AddModelError("", "That title or slug already exists.");
                     return View(model);
                 }
 
-                //DTO the rest
+                // DTO the rest
                 dto.Slug = slug;
                 dto.Body = model.Body;
                 dto.HasSidebar = model.HasSidebar;
                 dto.Sorting = 100;
 
-                //Save the DTO
+                // Save DTO
                 db.Pages.Add(dto);
                 db.SaveChanges();
+            }
 
- }
-            //Set TempData message
-            TempData["SM"] = "You have added a new page!!";
+            // Set TempData message
+            TempData["SM"] = "You have added a new page!";
 
-            //Redirect
-
+            // Redirect
             return RedirectToAction("AddPage");
         }
 
-        // Get: Admin/Pages/EditPage/id
+        // GET: Admin/Pages/EditPage/id
         [HttpGet]
         public ActionResult EditPage(int id)
         {
-            //Declere the pageVM
+            // Declare pageVM
             PageVM model;
 
-           
             using (Db db = new Db())
             {
-                //get the page
+                // Get the page
                 PageDTO dto = db.Pages.Find(id);
 
-                //confirm page exist
-                if (dto==null)
+                // Confirm page exists
+                if (dto == null)
                 {
                     return Content("The page does not exist.");
                 }
 
-                //Init pageVM
+                // Init pageVM
                 model = new PageVM(dto);
-
-
-
             }
 
-            //Return view with model
-
+            // Return view with model
             return View(model);
         }
 
@@ -136,28 +120,27 @@ namespace ProyectoDiginamo.Areas.Admin.Controllers
         [HttpPost]
         public ActionResult EditPage(PageVM model)
         {
-            //check model
-            if (! ModelState.IsValid)
+            // Check model state
+            if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
             using (Db db = new Db())
             {
-
-                //Get Page Id
+                // Get page id
                 int id = model.Id;
 
-                //Declare slug
-                String slug = "home";
+                // Init slug
+                string slug = "home";
 
-                //Get the Page
+                // Get the page
                 PageDTO dto = db.Pages.Find(id);
 
-                //Dto the title
+                // DTO the title
                 dto.Title = model.Title;
 
-                //check for slug and set it if need be
+                // Check for slug and set it if need be
                 if (model.Slug != "home")
                 {
                     if (string.IsNullOrWhiteSpace(model.Slug))
@@ -167,82 +150,74 @@ namespace ProyectoDiginamo.Areas.Admin.Controllers
                     else
                     {
                         slug = model.Slug.Replace(" ", "-").ToLower();
-
                     }
                 }
 
-                //Make sure the title and slug are unique
+                // Make sure title and slug are unique
                 if (db.Pages.Where(x => x.Id != id).Any(x => x.Title == model.Title) ||
-                    db.Pages.Where(x => x.Id != id).Any(x => x.Slug == slug))
+                     db.Pages.Where(x => x.Id != id).Any(x => x.Slug == slug))
                 {
-                    ModelState.AddModelError("", "That title or slug already exist");
+                    ModelState.AddModelError("", "That title or slug already exists.");
                     return View(model);
                 }
 
-                //DTO the result
+                // DTO the rest
                 dto.Slug = slug;
                 dto.Body = model.Body;
                 dto.HasSidebar = model.HasSidebar;
 
-                //save DTO
+                // Save the DTO
                 db.SaveChanges();
-
             }
-            //Set TemData message
-            TempData["SM"] = "You have edited the page!!";
 
-            //Redirect
+            // Set TempData message
+            TempData["SM"] = "You have edited the page!";
+
+            // Redirect
             return RedirectToAction("EditPage");
         }
 
-        // Get: Admin/Pages/PageDetails/id
+        // GET: Admin/Pages/PageDetails/id
         public ActionResult PageDetails(int id)
         {
-
-            //Declare the pageVm
+            // Declare PageVM
             PageVM model;
 
-            
             using (Db db = new Db())
             {
-                //Get the Page
+                // Get the page
                 PageDTO dto = db.Pages.Find(id);
 
-                //Comfirm page exists
+                // Confirm page exists
                 if (dto == null)
                 {
                     return Content("The page does not exist.");
                 }
-               
-                    //Init PageMV
-                    model = new PageVM(dto);
 
+                // Init PageVM
+                model = new PageVM(dto);
             }
-            //Return View with model
+
+            // Return view with model
             return View(model);
         }
 
-        // Get: Admin/Pages/DeletePage/id
+        // GET: Admin/Pages/DeletePage/id
         public ActionResult DeletePage(int id)
         {
-
             using (Db db = new Db())
             {
-
-
-                //Get the page
+                // Get the page
                 PageDTO dto = db.Pages.Find(id);
 
-                //Remove the page
+                // Remove the page
                 db.Pages.Remove(dto);
-                db.SaveChanges();
 
-                //Save
+                // Save
                 db.SaveChanges();
-
             }
 
-            //redirect
+            // Redirect
             return RedirectToAction("Index");
         }
 
@@ -250,18 +225,13 @@ namespace ProyectoDiginamo.Areas.Admin.Controllers
         [HttpPost]
         public void ReorderPages(int[] id)
         {
-
             using (Db db = new Db())
             {
-
-
-                //Set intial count
+                // Set initial count
                 int count = 1;
 
-
-                //Declare PageDTO
+                // Declare PageDTO
                 PageDTO dto;
-
 
                 // Set sorting for each page
                 foreach (var pageId in id)
@@ -272,57 +242,52 @@ namespace ProyectoDiginamo.Areas.Admin.Controllers
                     db.SaveChanges();
 
                     count++;
-
                 }
-
-
             }
+
         }
 
-        // Get: Admin/Pages/EditSidebar
+        // GET: Admin/Pages/EditSidebar
         [HttpGet]
         public ActionResult EditSidebar()
         {
-            //Declare the model
+            // Declare model
             SidebarVM model;
 
-            
             using (Db db = new Db())
             {
-                //Get the DTO
+                // Get the DTO
                 SidebarDTO dto = db.Sidebar.Find(1);
 
-                //Init model
+                // Init model
                 model = new SidebarVM(dto);
-
             }
-            //Return view with model
+
+            // Return view with model
             return View(model);
         }
 
-        // POST: Admin/Pages/ReorderPages
+        // POST: Admin/Pages/EditSidebar
         [HttpPost]
         public ActionResult EditSidebar(SidebarVM model)
         {
-
             using (Db db = new Db())
             {
-
-                //Get DTO
+                // Get the DTO
                 SidebarDTO dto = db.Sidebar.Find(1);
 
-                //DTO body
+                // DTO the body
                 dto.Body = model.Body;
 
-                //Save
+                // Save
                 db.SaveChanges();
             }
-            //Set TempData message
-            TempData["SM"] = "You have edited the sidebar!!";
 
-            //Redirect
+            // Set TempData message
+            TempData["SM"] = "You have edited the sidebar!";
+
+            // Redirect
             return RedirectToAction("EditSidebar");
         }
-
     }
 }

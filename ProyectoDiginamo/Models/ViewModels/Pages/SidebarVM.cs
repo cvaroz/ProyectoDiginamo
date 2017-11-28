@@ -10,7 +10,8 @@ namespace ProyectoDiginamo.Models.ViewModels.Pages
     public class SidebarVM
     {
         public SidebarVM()
-        {}
+        {
+        }
 
         public SidebarVM(SidebarDTO row)
         {
@@ -21,6 +22,5 @@ namespace ProyectoDiginamo.Models.ViewModels.Pages
         public int Id { get; set; }
         [AllowHtml]
         public string Body { get; set; }
-
     }
 }
